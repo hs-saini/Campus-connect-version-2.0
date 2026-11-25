@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusConnect | Admin Portal</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"
+    onerror="this.onerror=null;this.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'"></script>
+  <script src="admin.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <a class="brand" href="admin.html"><span class="brandmark">C</span><span class="brandname">Campus<span>Connect</span></span></a>
+      <p class="navlabel">Admin Portal</p>
+      <nav class="navigation">
+        <button class="navitem active" type="button" data-view="overview"><span class="ico">▦</span><span>Overview</span></button>
+        <button class="navitem" type="button" data-view="events"><span class="ico">◷</span><span>Manage Events</span></button>
+        <button class="navitem" type="button" data-view="students"><span class="ico">☷</span><span>Registrations</span></button>
+        <button class="navitem" type="button" data-view="scanner"><span class="ico">▣</span><span>QR Scanner</span></button>
+        <button class="navitem" id="adminApprovalNav" type="button" data-view="approvals" hidden><span class="ico">✓</span><span>Admin Approvals</span></button>
+      </nav>
+      <a class="admin-page-link" href="index.html">Open Student Portal ↗</a>
+      <button class="admin-page-link logout-link" id="logoutAdmin" type="button">Lock Admin Portal</button>
+      <div class="sidebarbottom"><strong>Admin Control</strong><p>Manage events, payments and event entry.</p></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><p class="breadcrumb"><span>CampusConnect</span><span>/</span><strong id="adminCrumb">Admin Overview</strong></p><div class="profile"><span class="avatar">A</span><span><strong>Administrator</strong><small id="adminStatus">Locked</small></span></div></header>
+
+      <section class="view active" id="overview">
+        <div class="welcome"><div><span class="page-kicker">ADMIN CONTROL CENTER</span><h1>Event Operations</h1><p>Manage registrations and approved entry activity.</p></div><button class="btn" id="addEvent">＋ Add Event</button></div>
+        <div class="stats"><article class="stat"><span class="staticon">📌</span><div><small>Active Events</small><strong id="adminEvents">0</strong></div></article><article class="stat"><span class="staticon">👤</span><div><small>Registered Students</small><strong id="adminStudents">0</strong></div></article><article class="stat"><span class="staticon">✓</span><div><small>Entries Used</small><strong id="entryCount">0</strong></div></article></div>
+        <div class="sectionhead"><h2>Recent Registrations</h2><span class="sub">Live Local Storage records</span></div>
+        <div class="tablewrap"><table class="table"><thead><tr><th>Student</th><th>Roll No.</th><th>Event</th><th>Email</th><th>Phone</th><th>Payment</th><th>Proof</th><th>Status</th></tr></thead><tbody id="adminRows"></tbody></table></div>
+      </section>
+
+      <section class="view" id="events" hidden>
+        <div class="welcome"><div><h1>Manage Events</h1><p>Create, edit or remove event listings.</p></div><button class="btn" id="addEventAlt">＋ Add Event</button></div>
+        <div class="tablewrap"><table class="table"><thead><tr><th>Event</th><th>Type</th><th>Date / Time</th><th>Venue</th><th>Fee</th><th>Actions</th></tr></thead><tbody id="adminEventRows"></tbody></table></div>
+      </section>
+
+      <section class="view" id="students" hidden>
+        <div class="welcome"><div><h1>Student Registrations</h1><p>Review payments and approve entry passes.</p></div><input id="registrationSearch" class="select" type="search" placeholder="Search student or event"></div>
+        <div class="tablewrap"><table class="table"><thead><tr><th>Student</th><th>Roll No.</th><th>Event</th><th>Email</th><th>Phone</th><th>Payment</th><th>Proof</th><th>Status</th></tr></thead><tbody id="studentRows"></tbody></table></div>
+      </section>
+
+      <section class="view" id="scanner" hidden>
+        <div class="welcome"><div><h1>Entry QR Scanner</h1><p>Use a phone or laptop camera to verify a student's pass.</p></div></div>
+        <div class="scanner-layout"><div><div id="qrReader" class="qr-reader"></div><div class="scanner-actions"><button class="btn" id="startCamera" type="button">Start Camera</button><button class="btn cancel" id="stopCamera" type="button">Stop Camera</button><label class="btn qr-file-button" for="qrImageFile">Scan QR Image</label><input id="qrImageFile" type="file" accept="image/*" hidden></div></div><div><div class="formrow"><label>Manual backup token</label><input id="manualQr" placeholder="Paste CCPASS token"></div><button class="btn" id="verifyManual" type="button">Verify Entry</button><div id="scanResult" class="scan-result">Camera ready when opened.</div></div></div>
+      </section>
+
+      <section class="view" id="approvals" hidden>
+        <div class="welcome"><div><h1>Admin Account Approvals</h1><p>Review applications and control approved category admins.</p></div></div>
+        <div class="sectionhead"><h2>Pending Applications</h2><span class="sub">Requires Master Admin approval</span></div>
+        <div class="tablewrap"><table class="table"><thead><tr><th>Name</th><th>Admin ID</th><th>Email</th><th>Category</th><th>Requested</th><th>Action</th></tr></thead><tbody id="pendingAdminRows"></tbody></table></div>
+        <div class="sectionhead"><h2>Approved Category Admins</h2></div>
+        <div class="tablewrap"><table class="table"><thead><tr><th>Name</th><th>Admin ID</th><th>Email</th><th>Category</th><th>Status</th><th>Action</th></tr></thead><tbody id="approvedAdminRows"></tbody></table></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modalbg" id="loginModal">
+    <section class="modal modal-large">
+      <h2>Admin Portal Access</h2>
+      <div class="role-tabs"><button class="role-tab active" id="showLoginTab" type="button">Admin Login</button><button class="role-tab" id="showApplyTab" type="button">Apply for Admin ID</button></div>
+      <form id="loginForm">
+        <p class="muted">Master: <strong>masteradmin / 1234</strong> · Category admins use their approved ID and password.</p>
+        <div class="formrow"><label>Admin ID</label><input id="adminLoginId" required autocomplete="username" placeholder="Master or approved Admin ID"></div>
+        <div class="formrow"><label>Password</label><input id="adminLoginPassword" type="password" required autocomplete="current-password"></div>
+        <div class="modalactions"><button class="btn" type="submit">Login to Admin Portal</button></div>
+      </form>
+      <form id="applyAdminForm" hidden>
+        <p class="muted">Submit an application. Login becomes active after Master Admin approval.</p>
+        <div class="formgrid">
+          <div class="formrow"><label>Full Name</label><input id="applyName" required></div>
+          <div class="formrow"><label>Email</label><input id="applyEmail" type="email" required></div>
+          <div class="formrow"><label>Admin ID</label><input id="applyAdminId" required pattern="[A-Za-z0-9_-]{4,20}" placeholder="fest-admin"></div>
+          <div class="formrow"><label>Password</label><input id="applyPassword" type="password" minlength="6" required></div>
+          <div class="formrow"><label>Event Category</label><select id="applyCategory" required><option value="">Select category</option><option>Technology</option><option>Cultural</option><option>Sports</option><option>Workshop</option><option>Hackathon</option><option>Prize</option><option>Social</option></select></div>
+          <div class="formrow"><label>Phone Number</label><input id="applyPhone" type="tel" pattern="[0-9]{10}" maxlength="10" required></div>
+        </div>
+        <div class="modalactions"><button class="btn" type="submit">Submit Admin Application</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modalbg" id="eventModal" hidden><section class="modal modal-large"><h2 id="eventModalTitle">Add Event</h2><form id="eventForm"><div class="formgrid"><div class="formrow"><label>Event Template</label><select id="eventTemplate" required><option value="">Select type</option><option value="Technology">Tech Fest / Technology</option><option value="Cultural">Cultural Fest</option><option value="Sports">Sports Tournament</option><option value="Workshop">Workshop / Seminar</option><option value="Hackathon">Hackathon / Coding Competition</option><option value="Prize">Prize Pool Competition</option><option value="Social">Social / Community Event</option></select></div><div class="formrow"><label>College Name</label><input id="eventCollege" required value="CampusConnect College"></div><div class="formrow"><label>Event Name</label><input id="eventTitle" required></div><div class="formrow"><label>Date</label><input id="eventDate" type="date" required></div><div class="formrow"><label>Time</label><input id="eventTime" type="time" required></div><div class="formrow"><label>Venue</label><input id="eventVenue" required></div><div class="formrow"><label>Contact Number</label><input id="eventContact" type="tel" pattern="[0-9]{10}" maxlength="10" required></div><div class="formrow"><label>Coordinator Email</label><input id="eventEmail" type="email" required></div></div><div class="formrow"><label>Description</label><textarea id="eventDescription" rows="3" required></textarea></div><div class="formrow"><label>Participation Fee (₹)</label><input id="eventFee" type="number" min="0" value="0" required></div><div class="formrow" id="paymentQrField" hidden><label>Payment QR Image</label><input id="eventQrUpload" type="file" accept="image/*"><input id="eventQrUrl" type="text" placeholder="Or paste QR image URL"><div id="paymentQrPreview" class="qr-preview" hidden></div></div><div class="modalactions"><button class="btn" type="submit">Save Event</button><button class="btn cancel" id="cancelEvent" type="button">Cancel</button></div></form></section></div>
+  <div class="modalbg" id="entrySuccessModal" hidden><section class="modal entry-success-modal"><div class="success-icon">✓</div><h2>Entry Confirmed</h2><p id="entrySuccessText"></p><button class="btn" id="closeEntrySuccess" type="button">Done</button></section></div>
+  <div class="toast" id="toast"></div>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Student college event portal">
+  <title>CampusConnect | Student Portal</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard"><span class="brandmark">C</span><span class="brandname">Campus<span>Connect</span></span></a>
+      <p class="navlabel">Student Menu</p>
+      <nav class="navigation">
+        <button class="navitem active" type="button" data-view="dashboard"><span class="ico">▦</span><span>Dashboard</span></button>
+        <button class="navitem" type="button" data-view="events"><span class="ico">◷</span><span>Browse Events</span></button>
+        <button class="navitem" type="button" data-view="registrations"><span class="ico">☷</span><span>My Registrations</span></button>
+        <button class="navitem" type="button" data-view="profile"><span class="ico">●</span><span>My Details</span></button>
+      </nav>
+      <a class="admin-page-link" href="admin.html">Open Admin Portal ↗</a>
+      <div class="sidebarbottom"><strong>College Events</strong><p>Discover events and keep your entry passes in one place.</p></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <p class="breadcrumb"><span>CampusConnect</span><span>/</span><strong id="crumb">Dashboard</strong></p>
+        <button class="profile" id="openStudentId" type="button">
+          <span class="avatar" id="profileAvatar">S</span>
+          <span><strong id="profileName">Create Student ID</strong><small id="profileId">Campus member</small></span>
+        </button>
+      </header>
+
+      <section class="view active" id="dashboard">
+        <div class="welcome"><div><span class="page-kicker">STUDENT CAMPUS HUB</span><h1>Find your next favourite thing.</h1><p>Discover events, register once and download your entry pass.</p></div><button class="btn" data-open-view="events">Explore Events ↗</button></div>
+        <div class="hero"><div class="hero-copy"><span class="hero-label"><span class="live-dot"></span> THE CAMPUS IS BUZZING</span><h2>Make room for<br>something memorable.</h2><p>From big-stage moments to new skills, your next story starts here.</p><button class="hero-link" data-open-view="events">Find your next event ↗</button></div><div class="hero-art" aria-hidden="true"><span class="hero-orbit hero-orbit-one"></span><span class="hero-orbit hero-orbit-two"></span><span class="hero-emoji">🎓</span></div></div>
+        <div class="stats">
+          <article class="stat"><span class="staticon">📅</span><div><small>Upcoming Events</small><strong id="statEvents">0</strong></div></article>
+          <article class="stat"><span class="staticon">📝</span><div><small>Your Registrations</small><strong id="statMine">0</strong></div></article>
+          <article class="stat"><span class="staticon">✓</span><div><small>Entry Passes</small><strong id="statPasses">0</strong></div></article>
+        </div>
+        <div class="sectionhead"><div><span class="section-kicker">SAVE YOUR SPOT</span><h2>Coming up on campus</h2></div><button class="text-link" data-open-view="events">See all events →</button></div>
+        <div class="eventgrid" id="featured"></div>
+      </section>
+
+      <section class="view" id="events" hidden>
+        <div class="welcome"><div><h1>Explore Events</h1><p>Search and register for campus activities.</p></div></div>
+        <div class="controls"><label class="search"><input id="search" type="search" placeholder="Search events, venues, categories..."></label><select class="select" id="filter"><option value="all">All Categories</option><option>Technology</option><option>Cultural</option><option>Sports</option><option>Workshop</option><option>Hackathon</option><option>Prize</option><option>Social</option></select></div>
+        <div class="eventgrid" id="allEvents"></div>
+      </section>
+
+      <section class="view" id="profile" hidden>
+        <div class="welcome"><div><h1>My Details</h1><p>View and update the details saved to your Student ID.</p></div><button class="btn" id="editStudentDetails" type="button" hidden>Edit Details</button></div>
+        <article class="student-details-card" id="studentDetailsCard" hidden>
+          <div class="student-detail"><small>Student ID</small><strong id="detailsId"></strong></div>
+          <div class="student-detail"><small>Full Name</small><strong id="detailsName"></strong></div>
+          <div class="student-detail"><small>Roll Number</small><strong id="detailsRoll"></strong></div>
+          <div class="student-detail"><small>College Email</small><strong id="detailsEmail"></strong></div>
+          <div class="student-detail"><small>Mobile Number</small><strong id="detailsPhone"></strong></div>
+        </article>
+        <div id="studentDetailsEmpty" class="empty" hidden>
+          <p>Create your Student ID to save and manage your details here.</p>
+          <button class="btn" id="createStudentIdFromDetails" type="button">Create Student ID</button>
+        </div>
+      </section>
+
+      <section class="view" id="registrations" hidden>
+        <div class="welcome"><div><h1>My Registrations</h1><p>Only your registrations and entry passes are shown here.</p></div></div>
+        <div class="tablewrap"><table class="table"><thead><tr><th>Event</th><th>Date</th><th>Venue</th><th>Payment</th><th>Status</th><th>Entry Pass</th></tr></thead><tbody id="myRows"></tbody></table></div>
+        <p id="myEmpty" class="empty" hidden>You have not registered for any event yet.</p>
+      </section>
+      <footer class="footnote">CampusConnect · Student Portal</footer>
+    </main>
+  </div>
+
+  <div class="modalbg" id="studentModal" hidden><section class="modal"><h2 id="studentModalTitle">Create Lifetime Student ID</h2><p class="muted">Created once and used for every event registration.</p><form id="studentForm"><div class="formrow"><label>Full Name</label><input id="studentName" required></div><div class="formrow"><label>Roll Number</label><input id="studentRoll" required></div><div class="formrow"><label>College Email</label><input id="studentEmail" type="email" required></div><div class="formrow"><label>Mobile Number</label><input id="studentPhone" type="tel" pattern="[0-9]{10}" maxlength="10" required></div><div class="modalactions"><button class="btn" id="saveStudentDetails" type="submit">Create Student ID</button><button class="btn cancel" type="button" id="cancelStudentId">Cancel</button></div></form></section></div>
+
+  <div class="modalbg" id="registerModal" hidden><section class="modal"><h2>Register for Event</h2><p class="muted" id="modalEvent"></p><form id="regform"><div class="formrow"><label>Full Name</label><input id="regName" required></div><div class="formrow"><label>Roll Number</label><input id="regRoll" required></div><div class="formrow"><label>Email</label><input id="regEmail" type="email" required></div><div class="formrow"><label>Mobile Number</label><input id="regPhone" type="tel" pattern="[0-9]{10}" maxlength="10" required></div><div id="paymentSection" class="payment-section" hidden><div class="payment-box"><strong>Payment QR</strong><div id="paymentQr" class="payment-qr"></div><small id="paymentAmount"></small></div><div class="formrow"><label>Upload Payment Proof</label><input id="paymentProof" type="file" accept="image/*,.pdf"></div></div><div class="modalactions"><button class="btn" type="submit">Submit Registration</button><button class="btn cancel" type="button" id="cancelRegistration">Cancel</button></div></form></section></div>
+
+  <div class="modalbg" id="passModal" hidden><section class="modal modal-pass"><h2>Your Entry Pass</h2><div id="entryPass" class="entry-pass"><div class="pass-brand">Campus<span>Connect</span></div><div class="pass-body"><span class="pass-kicker">OFFICIAL EVENT ENTRY</span><h3 id="passEventName"></h3><p id="passCollege"></p><div class="pass-details"><div><small>Student</small><strong id="passStudent"></strong></div><div><small>Roll / ID</small><strong id="passRoll"></strong></div><div><small>Date & Time</small><strong id="passSchedule"></strong></div><div><small>Venue</small><strong id="passVenue"></strong></div></div><div id="passQr" class="pass-qr"></div><small id="passToken"></small></div></div><div class="modalactions pass-actions"><button class="btn" id="downloadPass" type="button">Download Pass</button><a class="btn email-pass" id="emailPass">Email Pass</a><button class="btn cancel" id="closePass" type="button">Close</button></div></section></div>
+  <div class="toast" id="toast"></div>
+</body>
+</html>
