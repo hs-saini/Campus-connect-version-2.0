@@ -198,12 +198,6 @@ button {
   color: #5543c8;
 }
 
-.profile-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .main {
   width: min(100% - 252px, 1620px);
   min-height: 100vh;

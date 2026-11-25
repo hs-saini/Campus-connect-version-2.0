@@ -52,7 +52,7 @@
       </section>
 
       <section class="view" id="profile" hidden>
-        <div class="welcome"><div><h1>My Details</h1><p>View and update the details saved to your Student ID.</p></div><div class="profile-actions"><button class="btn" id="editStudentDetails" type="button" hidden>Edit Details</button><button class="btn cancel" id="studentLogout" type="button" hidden>Log Out</button></div></div>
+        <div class="welcome"><div><h1>My Details</h1><p>View and update the details saved to your Student ID.</p></div><button class="btn" id="editStudentDetails" type="button" hidden>Edit Details</button></div>
         <article class="student-details-card" id="studentDetailsCard" hidden>
           <div class="student-detail"><small>Student ID</small><strong id="detailsId"></strong></div>
           <div class="student-detail"><small>Full Name</small><strong id="detailsName"></strong></div>
@@ -61,8 +61,8 @@
           <div class="student-detail"><small>Mobile Number</small><strong id="detailsPhone"></strong></div>
         </article>
         <div id="studentDetailsEmpty" class="empty" hidden>
-          <p>Log in or create a student account to see your shared Student ID and details here.</p>
-          <button class="btn" id="createStudentIdFromDetails" type="button">Log In / Create Account</button>
+          <p>Create your Student ID to save and manage your details here.</p>
+          <button class="btn" id="createStudentIdFromDetails" type="button">Create Student ID</button>
         </div>
       </section>
 
@@ -75,7 +75,7 @@
     </main>
   </div>
 
-  <div class="modalbg" id="studentModal" hidden><section class="modal"><h2 id="studentModalTitle">Student Account</h2><p class="muted" id="studentModalHint">Create an account or log in to access the same Student ID on every device.</p><div class="role-tabs" id="studentAuthTabs"><button class="role-tab active" id="studentSignupTab" type="button">Create Account</button><button class="role-tab" id="studentLoginTab" type="button">Log In</button></div><form id="studentForm"><div class="formrow"><label>Full Name</label><input id="studentName" required></div><div class="formrow"><label>Roll Number</label><input id="studentRoll" required></div><div class="formrow"><label>College Email</label><input id="studentEmail" type="email" required autocomplete="email"></div><div class="formrow"><label>Mobile Number</label><input id="studentPhone" type="tel" pattern="[0-9]{10,15}" maxlength="16" required></div><div class="formrow" id="studentPasswordRow"><label>Create Password (at least 10 characters)</label><input id="studentPassword" type="password" minlength="10" maxlength="128" required autocomplete="new-password"></div><div class="modalactions"><button class="btn" id="saveStudentDetails" type="submit">Create Student ID</button><button class="btn cancel" type="button" id="cancelStudentId">Cancel</button></div></form><form id="studentLoginForm" hidden><div class="formrow"><label>College Email</label><input id="studentLoginEmail" type="email" required autocomplete="username"></div><div class="formrow"><label>Password</label><input id="studentLoginPassword" type="password" required autocomplete="current-password"></div><div class="modalactions"><button class="btn" type="submit">Log In</button><button class="btn cancel" type="button" id="cancelStudentLogin">Cancel</button></div></form></section></div>
+  <div class="modalbg" id="studentModal" hidden><section class="modal"><h2 id="studentModalTitle">Create Lifetime Student ID</h2><p class="muted">Created once and used for every event registration.</p><form id="studentForm"><div class="formrow"><label>Full Name</label><input id="studentName" required></div><div class="formrow"><label>Roll Number</label><input id="studentRoll" required></div><div class="formrow"><label>College Email</label><input id="studentEmail" type="email" required></div><div class="formrow"><label>Mobile Number</label><input id="studentPhone" type="tel" pattern="[0-9]{10}" maxlength="10" required></div><div class="modalactions"><button class="btn" id="saveStudentDetails" type="submit">Create Student ID</button><button class="btn cancel" type="button" id="cancelStudentId">Cancel</button></div></form></section></div>
 
   <div class="modalbg" id="registerModal" hidden><section class="modal"><h2>Register for Event</h2><p class="muted" id="modalEvent"></p><form id="regform"><div class="formrow"><label>Full Name</label><input id="regName" required></div><div class="formrow"><label>Roll Number</label><input id="regRoll" required></div><div class="formrow"><label>Email</label><input id="regEmail" type="email" required></div><div class="formrow"><label>Mobile Number</label><input id="regPhone" type="tel" pattern="[0-9]{10}" maxlength="10" required></div><div id="paymentSection" class="payment-section" hidden><div class="payment-box"><strong>Payment QR</strong><div id="paymentQr" class="payment-qr"></div><small id="paymentAmount"></small></div><div class="formrow"><label>Upload Payment Proof</label><input id="paymentProof" type="file" accept="image/*,.pdf"></div></div><div class="modalactions"><button class="btn" type="submit">Submit Registration</button><button class="btn cancel" type="button" id="cancelRegistration">Cancel</button></div></form></section></div>
 
