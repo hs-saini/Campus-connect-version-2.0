@@ -66,8 +66,8 @@
       <h2>Admin Portal Access</h2>
       <div class="role-tabs"><button class="role-tab active" id="showLoginTab" type="button">Admin Login</button><button class="role-tab" id="showApplyTab" type="button">Apply for Admin ID</button></div>
       <form id="loginForm">
-        <p class="muted">Master: <strong>masteradmin / 1234</strong> · Category admins use their approved ID and password.</p>
-        <div class="formrow"><label>Admin ID</label><input id="adminLoginId" required autocomplete="username" placeholder="Master or approved Admin ID"></div>
+        <p class="muted">Master Admin sign-in is configured privately for this deployment. Approved category admins use their approved ID and password.</p>
+        <div class="formrow"><label>Admin Username</label><input id="adminLoginId" required autocomplete="username" placeholder="Master or approved Admin username"></div>
         <div class="formrow"><label>Password</label><input id="adminLoginPassword" type="password" required autocomplete="current-password"></div>
         <div class="modalactions"><button class="btn" type="submit">Login to Admin Portal</button></div>
       </form>
@@ -77,9 +77,9 @@
           <div class="formrow"><label>Full Name</label><input id="applyName" required></div>
           <div class="formrow"><label>Email</label><input id="applyEmail" type="email" required></div>
           <div class="formrow"><label>Admin ID</label><input id="applyAdminId" required pattern="[A-Za-z0-9_-]{4,20}" placeholder="fest-admin"></div>
-          <div class="formrow"><label>Password</label><input id="applyPassword" type="password" minlength="6" required></div>
+          <div class="formrow"><label>Password (at least 10 characters)</label><input id="applyPassword" type="password" minlength="10" maxlength="128" required autocomplete="new-password"></div>
           <div class="formrow"><label>Event Category</label><select id="applyCategory" required><option value="">Select category</option><option>Technology</option><option>Cultural</option><option>Sports</option><option>Workshop</option><option>Hackathon</option><option>Prize</option><option>Social</option></select></div>
-          <div class="formrow"><label>Phone Number</label><input id="applyPhone" type="tel" pattern="[0-9]{10}" maxlength="10" required></div>
+          <div class="formrow"><label>Phone Number</label><input id="applyPhone" type="tel" pattern="[0-9]{10,15}" maxlength="16" required></div>
         </div>
         <div class="modalactions"><button class="btn" type="submit">Submit Admin Application</button></div>
       </form>

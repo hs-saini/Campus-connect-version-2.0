@@ -1,29 +1,27 @@
 # CampusConnect 2.0
 
-A responsive college event portal demo with separate student and admin portals.
+CampusConnect is a college event portal with student accounts, persistent Student IDs, event registration, and an admin portal. Student IDs are stored centrally, so logging in with the same account on another device returns the same ID.
 
-## Features
+## Local development
 
-- Browse events and register using a Student ID
-- View and edit student details in a separate profile section
-- Manage events, review registrations, and verify entry passes in the admin demo
-- Responsive layout for desktop and mobile
+1. Install Node.js 20 or newer.
+2. Install dependencies with `npm install`.
+3. Copy `.env.example` to `.env.local` and fill in the server-only settings.
+4. Run `vercel dev`.
 
-## Run locally
+The API creates the required database tables and default events when first used. The production database should be Neon Postgres.
 
-Open `index.html` in a browser, or serve this folder with a static web server:
+## Production environment variables
 
-```bash
-python -m http.server 8000
-```
+Set these in Vercel's **Production** environment. Do not commit `.env.local` or share secret values:
 
-Open `http://localhost:8000`. The admin demo is available at `admin.html`.
+- `DATABASE_URL` — Neon Postgres connection string.
+- `SESSION_SECRET` — a random secret of at least 32 characters.
+- `MASTER_ADMIN_USERNAME` — the master admin username.
+- `MASTER_ADMIN_PASSWORD_HASH` — generated locally with `npm run hash-admin-password`; the password is entered without being echoed.
 
-## Live demo
+Student signup requires a unique email and roll number. Passwords are hashed on the server, and login uses secure, HTTP-only cookies. Events, registrations, payment status, and entry verification are stored in the shared database.
 
-- Student portal: https://hs-saini.github.io/Campus-connect-version-2.0/
-- Admin demo: https://hs-saini.github.io/Campus-connect-version-2.0/admin.html
+## Demo limitations
 
-## Limitations
-
-This is a front-end demonstration, not a production service. Events, profiles, registrations, payment proofs, and admin data are stored in the current browser's Local Storage and are not shared across users or devices. The admin login is client-side only, and no payments are processed. Do not enter real student or payment data.
+This is not a payment processor. Payment proofs are submitted for admin review, and student email ownership is not verified. Do not use real payment data until email verification and production operational safeguards are configured.
