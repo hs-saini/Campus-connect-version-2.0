@@ -1,6 +1,8 @@
 const EVENT_KEY = "college-event-list";
 const REG_KEY = "college-event-registrations";
 const STUDENT_KEY = "college-event-student-id";
+const STUDENTS_KEY = "college-event-students";
+const ACTIVE_STUDENT_KEY = "college-event-active-student";
 const artwork = { Technology:"💻", Cultural:"🎵", Sports:"🏆", Workshop:"🛠️", Social:"📚", Hackathon:"⌨️", Prize:"🏅" };
 let selectedEventId = "";
 let toastTimer;
@@ -26,7 +28,86 @@ function readRegs() {
   return [];
 }
 function saveRegs(value) { localStorage.setItem(REG_KEY, JSON.stringify(value)); }
-function readStudent() { try { return JSON.parse(localStorage.getItem(STUDENT_KEY)); } catch (error) { return null; } }
+function readStudents() {
+  try {
+    const value = JSON.parse(localStorage.getItem(STUDENTS_KEY));
+    if (Array.isArray(value)) return value;
+  } catch (error) { console.error(error); }
+  return [];
+}
+function saveStudents(value) {
+  try {
+    localStorage.setItem(STUDENTS_KEY, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    console.error(error);
+    showToast("Could not save your account in this browser.");
+    return false;
+  }
+}
+function normalizeEmail(value) { return String(value || "").trim().toLowerCase(); }
+function normalizeRoll(value) { return String(value || "").trim().toUpperCase(); }
+function setActiveStudent(email) {
+  try {
+    localStorage.setItem(ACTIVE_STUDENT_KEY, normalizeEmail(email));
+    return true;
+  } catch (error) {
+    console.error(error);
+    showToast("Could not save your login in this browser.");
+    return false;
+  }
+}
+function readStudent() {
+  const students = readStudents();
+  let activeEmail = "";
+  try { activeEmail = localStorage.getItem(ACTIVE_STUDENT_KEY) || ""; } catch (error) { console.error(error); }
+  if (activeEmail) return students.find((student) => normalizeEmail(student.email) === normalizeEmail(activeEmail)) || null;
+
+  try {
+    const legacy = JSON.parse(localStorage.getItem(STUDENT_KEY));
+    if (!legacy?.id || !legacy?.email || !legacy?.roll) return null;
+    const byEmail = students.find((student) => normalizeEmail(student.email) === normalizeEmail(legacy.email));
+    if (byEmail) {
+      setActiveStudent(byEmail.email);
+      localStorage.removeItem(STUDENT_KEY);
+      return byEmail;
+    }
+    if (students.some((student) => normalizeRoll(student.roll) === normalizeRoll(legacy.roll))) return null;
+    const migrated = { ...legacy, passwordSalt:"", passwordHash:"" };
+    if (!saveStudents([...students, migrated]) || !setActiveStudent(migrated.email)) return null;
+    localStorage.removeItem(STUDENT_KEY);
+    return migrated;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+function createStudentId(students) {
+  const existingIds = new Set(students.map((student) => student.id));
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const id = `CC-${String(Math.floor(10000000 + Math.random() * 90000000))}`;
+    if (!existingIds.has(id)) return id;
+  }
+  throw new Error("Could not create a unique Student ID. Please try again.");
+}
+function toHex(bytes) { return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(""); }
+function fromHex(value) { return new Uint8Array(value.match(/.{2}/g).map((part) => parseInt(part, 16))); }
+async function hashPassword(password, salt) {
+  if (!window.crypto?.subtle) throw new Error("Secure password hashing is unavailable in this browser. Open the site using HTTPS or localhost.");
+  const saltBytes = salt ? Uint8Array.from(atob(salt), (character) => character.charCodeAt(0)) : window.crypto.getRandomValues(new Uint8Array(16));
+  const key = await window.crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await window.crypto.subtle.deriveBits({ name:"PBKDF2", salt:saltBytes, iterations:120000, hash:"SHA-256" }, key, 256);
+  return {
+    passwordSalt: btoa(String.fromCharCode(...saltBytes)),
+    passwordHash: toHex(new Uint8Array(bits))
+  };
+}
+function passwordsMatch(left, right) {
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  return difference === 0;
+}
 function formatDate(value) { return value ? new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" }) : ""; }
 function formatTime(value) {
   if (!value) return "";
@@ -56,13 +137,17 @@ function renderStudent() {
   const detailsCard = document.querySelector("#studentDetailsCard");
   const emptyDetails = document.querySelector("#studentDetailsEmpty");
   const editButton = document.querySelector("#editStudentDetails");
+  const passwordButton = document.querySelector("#setStudentPassword");
+  const logoutButton = document.querySelector("#studentLogout");
   if (!student) {
-    document.querySelector("#profileName").textContent = "Create Student ID";
-    document.querySelector("#profileId").textContent = "Campus member";
+    document.querySelector("#profileName").textContent = "Student Login / Sign up";
+    document.querySelector("#profileId").textContent = "This browser only";
     document.querySelector("#profileAvatar").textContent = "S";
     detailsCard.hidden = true;
     emptyDetails.hidden = false;
     editButton.hidden = true;
+    passwordButton.hidden = true;
+    logoutButton.hidden = true;
   } else {
     document.querySelector("#profileName").textContent = student.name;
     document.querySelector("#profileId").textContent = `${student.roll} · ${student.id}`;
@@ -75,6 +160,8 @@ function renderStudent() {
     detailsCard.hidden = false;
     emptyDetails.hidden = true;
     editButton.hidden = false;
+    passwordButton.hidden = Boolean(student.passwordHash);
+    logoutButton.hidden = false;
   }
 }
 
@@ -117,17 +204,46 @@ function renderRegistrations() {
 
 function refresh() { renderStudent(); renderEvents(); renderRegistrations(); }
 
-function openStudentModal() {
+function setStudentModalMode(mode) {
+  const tabs = document.querySelector("#studentAuthTabs");
+  const loginForm = document.querySelector("#loginForm");
+  const signupForm = document.querySelector("#signupForm");
+  const editForm = document.querySelector("#studentForm");
+  const passwordForm = document.querySelector("#passwordSetupForm");
+  tabs.hidden = mode === "edit" || mode === "password";
+  loginForm.hidden = mode !== "login";
+  signupForm.hidden = mode !== "signup";
+  editForm.hidden = mode !== "edit";
+  passwordForm.hidden = mode !== "password";
+  document.querySelectorAll("[data-student-mode]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.studentMode === mode);
+  });
+  const title = { login:"Student Login", signup:"Create Student Account", edit:"Edit Student Details", password:"Set Login Password" }[mode];
+  const hint = {
+    login:"Log in to use your saved Student ID on this browser.",
+    signup:"Your account and Student ID are saved in this browser only.",
+    edit:"Update the details saved to your Student ID.",
+    password:"Set a password for the saved student account on this browser."
+  }[mode];
+  document.querySelector("#studentModalTitle").textContent = title;
+  document.querySelector("#studentModalHint").textContent = hint;
+}
+
+function openStudentModal(mode) {
   const existing = readStudent();
-  document.querySelector("#studentModalTitle").textContent = existing ? "Edit Student Details" : "Create Lifetime Student ID";
-  document.querySelector("#saveStudentDetails").textContent = existing ? "Save Changes" : "Create Student ID";
-  if (existing) {
-    document.querySelector("#studentName").value = existing.name;
-    document.querySelector("#studentRoll").value = existing.roll;
-    document.querySelector("#studentEmail").value = existing.email;
-    document.querySelector("#studentPhone").value = existing.phone;
-  } else {
-    document.querySelector("#studentForm").reset();
+  const activeMode = mode || (existing ? "edit" : "login");
+  setStudentModalMode(activeMode);
+  if (activeMode === "edit" && existing) {
+    document.querySelector("#editStudentName").value = existing.name;
+    document.querySelector("#editStudentRoll").value = existing.roll;
+    document.querySelector("#editStudentEmail").value = existing.email;
+    document.querySelector("#editStudentPhone").value = existing.phone;
+  } else if (activeMode === "signup") {
+    document.querySelector("#signupForm").reset();
+  } else if (activeMode === "login") {
+    document.querySelector("#loginForm").reset();
+  } else if (activeMode === "password") {
+    document.querySelector("#passwordSetupForm").reset();
   }
   document.querySelector("#studentModal").hidden = false;
 }
@@ -192,13 +308,21 @@ function openEntryPass(token) {
 
 document.querySelector("#openStudentId").addEventListener("click", () => {
   if (readStudent()) showView("profile");
-  else openStudentModal();
+  else openStudentModal("login");
 });
-document.querySelector("#editStudentDetails").addEventListener("click", openStudentModal);
-document.querySelector("#createStudentIdFromDetails").addEventListener("click", openStudentModal);
+document.querySelector("#editStudentDetails").addEventListener("click", () => openStudentModal("edit"));
+document.querySelector("#setStudentPassword").addEventListener("click", () => openStudentModal("password"));
+document.querySelector("#studentLogout").addEventListener("click", () => {
+  localStorage.removeItem(ACTIVE_STUDENT_KEY);
+  refresh();
+  showView("dashboard");
+  showToast("Logged out. Your account is saved only in this browser.");
+});
+document.querySelector("#createStudentIdFromDetails").addEventListener("click", () => openStudentModal("login"));
 document.querySelector("#cancelStudentId").addEventListener("click", () => closeModal("studentModal"));
 document.querySelector("#cancelRegistration").addEventListener("click", () => closeModal("registerModal"));
 document.querySelector("#closePass").addEventListener("click", () => closeModal("passModal"));
+document.querySelectorAll("[data-student-mode]").forEach((button) => button.addEventListener("click", () => setStudentModalMode(button.dataset.studentMode)));
 document.querySelector("#search").addEventListener("input", renderEvents);
 document.querySelector("#filter").addEventListener("change", renderEvents);
 document.querySelectorAll(".navitem").forEach((button) => button.addEventListener("click", () => {
@@ -214,15 +338,127 @@ document.querySelector("#myRows").addEventListener("click", (event) => {
   if (button) openEntryPass(button.dataset.pass);
 });
 
+document.querySelector("#signupForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const name = document.querySelector("#studentName").value.trim();
+  const roll = document.querySelector("#studentRoll").value.trim();
+  const email = normalizeEmail(document.querySelector("#studentEmail").value);
+  const phone = document.querySelector("#studentPhone").value.trim();
+  const password = document.querySelector("#signupPassword").value;
+  if (password !== document.querySelector("#confirmPassword").value) {
+    showToast("Passwords do not match.");
+    return;
+  }
+  const students = readStudents();
+  const emailAccount = students.find((student) => normalizeEmail(student.email) === email);
+  const rollAccount = students.find((student) => normalizeRoll(student.roll) === normalizeRoll(roll));
+  const upgradingLegacyAccount = emailAccount && rollAccount === emailAccount && !emailAccount.passwordHash;
+  if ((emailAccount || rollAccount) && !upgradingLegacyAccount) {
+    showToast(emailAccount ? "This email already has a Student ID. Log in instead." : "This roll number already has a Student ID.");
+    return;
+  }
+  try {
+    const credentials = await hashPassword(password);
+    const student = {
+      id:upgradingLegacyAccount ? emailAccount.id : createStudentId(students),
+      name, roll, email, phone,
+      ...credentials
+    };
+    const updatedStudents = upgradingLegacyAccount
+      ? students.map((item) => item === emailAccount ? student : item)
+      : [...students, student];
+    if (!saveStudents(updatedStudents) || !setActiveStudent(student.email)) return;
+    closeModal("studentModal");
+    refresh();
+    showView("profile");
+    showToast(upgradingLegacyAccount ? `Login enabled. Your Student ID is still ${student.id}.` : `Account created. Your Student ID is ${student.id}.`);
+  } catch (error) {
+    console.error(error);
+    showToast(error.message || "Could not create your account.");
+  }
+});
+
+document.querySelector("#loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const email = normalizeEmail(document.querySelector("#loginEmail").value);
+  const password = document.querySelector("#loginPassword").value;
+  const student = readStudents().find((item) => normalizeEmail(item.email) === email);
+  if (!student) {
+    showToast("No account found for this email in this browser.");
+    return;
+  }
+  if (!student.passwordHash) {
+    if (!setActiveStudent(student.email)) return;
+    refresh();
+    closeModal("studentModal");
+    showView("profile");
+    openStudentModal("password");
+    showToast("Set a login password to protect this saved profile.");
+    return;
+  }
+  try {
+    const credentials = await hashPassword(password, student.passwordSalt);
+    if (!passwordsMatch(credentials.passwordHash, student.passwordHash)) {
+      showToast("Incorrect email or password.");
+      return;
+    }
+    if (!setActiveStudent(student.email)) return;
+    closeModal("studentModal");
+    refresh();
+    showView("dashboard");
+    showToast(`Welcome back, ${student.name}.`);
+  } catch (error) {
+    console.error(error);
+    showToast(error.message || "Could not log in.");
+  }
+});
+
 document.querySelector("#studentForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const existing = readStudent();
-  const student = { id:existing?.id || `CC-${Date.now().toString().slice(-8)}`, name:document.querySelector("#studentName").value.trim(), roll:document.querySelector("#studentRoll").value.trim(), email:document.querySelector("#studentEmail").value.trim(), phone:document.querySelector("#studentPhone").value.trim() };
-  localStorage.setItem(STUDENT_KEY, JSON.stringify(student));
+  if (!existing) return;
+  const student = {
+    ...existing,
+    name:document.querySelector("#editStudentName").value.trim(),
+    roll:document.querySelector("#editStudentRoll").value.trim(),
+    email:normalizeEmail(document.querySelector("#editStudentEmail").value),
+    phone:document.querySelector("#editStudentPhone").value.trim()
+  };
+  const duplicate = readStudents().find((item) => item.id !== existing.id
+    && (normalizeEmail(item.email) === student.email || normalizeRoll(item.roll) === normalizeRoll(student.roll)));
+  if (duplicate) {
+    showToast("That email or roll number already belongs to another Student ID.");
+    return;
+  }
+  const students = readStudents().map((item) => item.id === existing.id ? student : item);
+  if (!saveStudents(students) || !setActiveStudent(student.email)) return;
   closeModal("studentModal");
   refresh();
   showView("profile");
-  showToast(existing ? "Student details updated." : `Student ID created: ${student.id}`);
+  showToast("Student details updated. Your Student ID is unchanged.");
+});
+
+document.querySelector("#passwordSetupForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const password = document.querySelector("#newStudentPassword").value;
+  if (password !== document.querySelector("#confirmStudentPassword").value) {
+    showToast("Passwords do not match.");
+    return;
+  }
+  const existing = readStudent();
+  if (!existing) return;
+  try {
+    const credentials = await hashPassword(password);
+    const students = readStudents().map((item) => item.id === existing.id ? { ...item, ...credentials } : item);
+    if (!saveStudents(students)) return;
+    closeModal("studentModal");
+    refresh();
+    showView("profile");
+    showToast("Login password saved in this browser.");
+  } catch (error) {
+    console.error(error);
+    showToast(error.message || "Could not save your password.");
+  }
 });
 
 document.querySelector("#regform").addEventListener("submit", (submitEvent) => {

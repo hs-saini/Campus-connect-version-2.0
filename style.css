@@ -282,8 +282,43 @@ button {
 .modalbg[hidden],
 .student-details-card[hidden],
 #editStudentDetails[hidden],
+#setStudentPassword[hidden],
+#studentLogout[hidden],
 #studentDetailsEmpty[hidden] {
   display: none;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 9px;
+}
+
+.student-auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border-radius: 9px;
+  background: #f3f2f7;
+}
+
+.student-auth-tab {
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.student-auth-tab.active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgb(25 24 40 / 10%);
 }
 
 .student-details-card {
